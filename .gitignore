@@ -1,0 +1,17 @@
+.env
+.venv
+.idea/
+.vscode/
+.fleet/
+__pycache__/
+docs/
+.benchmarks
+.pytest_cache
+.coverage
+coverage.xml
+.DS_Store
+pyrightconfig.json
+.python-version
+htmlcov/
+*.pkl
+data/models/*

@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "rta_rl"
+version = "0.1.0"
+description = ""
+authors = ["Bogdan Neterebskii <bog2dan1@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+matplotlib = "^3.10.0"
+shapely = "^2.0.7"
+pandas = "^2.2.3"
+scikit-learn = "^1.6.1"
+click = "^8.1.8"
+gymnasium = "^1.0.0"
+stable-baselines3 = "^2.4.0"
+typer = "^0.15.1"
+pydantic = "^2.10.6"
+loguru = "^0.7.3"
+tensorboard = "^2.19.0"
+
+[tool.poetry.scripts]
+rta = "rta_rl.cli:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
