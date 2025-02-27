@@ -1,80 +1,74 @@
-import os
 import time
+from pathlib import Path
+
 import numpy as np
+from loguru import logger
 from stable_baselines3 import PPO
 
-from custom_env import SimpleEnv
+from .custom_env import EnvParams, ProblemParams, SimpleEnv, Solution
 
 
-def inference(model_path, num_episodes=5, render=True):
-    """
-    Запуск обученной модели для оценки её производительности.
+def evaluate(model_path: Path, grid_size: int, num_episodes: int = 5, *, render: bool = True) -> None:
+    """Run the trained model to evaluate its performance."""
+    env = SimpleEnv(EnvParams(grid_size=grid_size))
 
-    Args:
-        model_path (str): Путь к сохраненной модели.
-        num_episodes (int): Количество эпизодов для оценки.
-        render (bool): Флаг для включения визуализации.
-    """
-    # Создание окружения
-    env = SimpleEnv(grid_size=10)
-
-    # Загрузка обученной модели
+    # Load the trained model
     model = PPO.load(model_path)
 
-    # Запуск эпизодов
+    # Run episodes
     episode_rewards = []
 
     for episode in range(num_episodes):
-        obs = env.reset()
-        done = False
+        obs, _info = env.reset()
+        terminated = False
+        truncated = False
         total_reward = 0
         step_count = 0
 
-        print(f"\nЭпизод {episode + 1}")
+        logger.info(f"\nEpisode {episode + 1}")
         if render:
-            print("Начальное состояние:")
+            logger.info("Initial state:")
             env.render()
 
-        while not done:
-            # Получение действия от модели
+        while not terminated and not truncated:
+            # Get action from the model
             action, _states = model.predict(obs, deterministic=True)
 
-            # Выполнение действия
-            obs, reward, done, info = env.step(action)
+            # Perform action
+            obs, reward, terminated, truncated, _info = env.step(action)
 
             total_reward += reward
             step_count += 1
 
             if render:
-                print(f"Шаг {step_count}, Действие: {action}, Награда: {reward:.2f}")
+                logger.info(f"Step {step_count}, Action: {action}, Reward: {reward:.2f}")
                 env.render()
-                time.sleep(0.5)  # Пауза для наблюдения
+                time.sleep(0.5)  # Pause for observation
 
         episode_rewards.append(total_reward)
-        print(
-            f"Эпизод {episode + 1} завершен. Шагов: {step_count}, Награда: {total_reward:.2f}"
-        )
+        logger.info(f"Episode {episode + 1} finished. Steps: {step_count}, Reward: {total_reward:.2f}")
 
-    # Вывод статистики
+    # Output statistics
     avg_reward = np.mean(episode_rewards)
     std_reward = np.std(episode_rewards)
 
-    print("\nРезультаты инференса:")
-    print(f"Среднее награда за эпизод: {avg_reward:.2f} ± {std_reward:.2f}")
-    print(f"Мин/Макс награды: {min(episode_rewards):.2f} / {max(episode_rewards):.2f}")
+    logger.info("\nInference results:")
+    logger.info(f"Average reward per episode: {avg_reward:.2f} ± {std_reward:.2f}")
+    logger.info(f"Min/Max rewards: {min(episode_rewards):.2f} / {max(episode_rewards):.2f}")
 
 
-if __name__ == "__main__":
-    # Путь к сохраненной лучшей модели
-    best_model_path = os.path.join("models", "best_model", "ppo_simple_env")
+def run(model_path: Path, grid_size: int, problem: ProblemParams) -> Solution:
+    """Run the trained model to solve a specific problem."""
+    env = SimpleEnv(EnvParams(grid_size=grid_size))
+    env.set_problem(problem_params=problem)
 
-    # Запуск инференса
-    if os.path.exists(best_model_path + ".zip"):
-        inference(best_model_path, num_episodes=5, render=True)
-    else:
-        # Если лучшей модели нет, используем финальную
-        final_model_path = os.path.join("models", "ppo_simple_env_final")
-        if os.path.exists(final_model_path + ".zip"):
-            inference(final_model_path, num_episodes=5, render=True)
-        else:
-            print("Модель не найдена. Сначала запустите обучение (train.py)")
+    model = PPO.load(model_path)
+    solution = Solution(steps=[])
+    while True:
+        observation = env.get_observation()
+        action, info = model.predict(observation)
+        obs, reward, terminated, truncated, _ = env.step(action)
+        solution.steps.append(int(action))
+        if terminated or truncated:
+            break
+    return solution

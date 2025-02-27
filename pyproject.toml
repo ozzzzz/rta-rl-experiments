@@ -11,7 +11,6 @@ matplotlib = "^3.10.0"
 shapely = "^2.0.7"
 pandas = "^2.2.3"
 scikit-learn = "^1.6.1"
-click = "^8.1.8"
 gymnasium = "^1.0.0"
 stable-baselines3 = "^2.4.0"
 typer = "^0.15.1"
@@ -25,3 +24,40 @@ rta = "rta_rl.cli:app"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+select = ["ALL"]
+ignore = [
+    "ANN101",  # missing type annotation for self in method
+    "ANN102",  # missing type annotation for cls in classmethod
+    "ANN002",  # type annotation on *args
+    "ANN003",  # type annotation on **kwargs
+    "B008",    # fastapi involves a lot of function calls in function definitions
+    "D100",    # Ignore module level docstrings, this project is never consumed
+    "D107",    # Ignore __init__ missing docstring.
+    "D104",    # Ignore public __init__ missing docstring.
+    "FBT003",  # default arguments in pydantic trigger FBT
+    "G004",    # logging(.., extra={}) does not appear to work
+    "PLR0913", # too many arguments to a function call
+    "S608",    # hardcoded sql
+    # Ignore TODO
+    "TD002", # Missing author in TODO
+    "TD003", # Missing issue link in TODO
+    "FIX",   # allow TODO's
+]
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.per-file-ignores]
+"tasks.py" = ["ANN", "E", "S"]
+"tests/*.py" = ["ANN", "ERA", "S", "INP", "D", "T", "PLR2004", "SLF001"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.pydocstyle]
+convention = "google"
